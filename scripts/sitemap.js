@@ -75,6 +75,10 @@ function generateNode(nodeProps) {
     frequency = 'monthly',
   } = nodeProps;
 
+  if (slug.includes('upcoming') || slug.includes('pdfs')) {
+    return null;
+  }
+
   const pagePath = path.join(basePath, fileName);
   let pageStats = {};
   try {

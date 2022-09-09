@@ -3,13 +3,20 @@ import { Box, Button, Container, Flex, Heading, Image, Input, Text } from '@chak
 import { GlobalHeader } from '../../components/global-header';
 import { OpensourceBanner } from '../../components/opensource-banner';
 import { Footer } from '../../components/footer';
-import { getAllRoadmaps, getRoadmapById, isInteractiveRoadmap, RoadmapType } from '../../lib/roadmap';
+import {
+  filterRoadmapsByIds,
+  getAllRoadmaps,
+  getRoadmapById,
+  isInteractiveRoadmap,
+  RoadmapType
+} from '../../lib/roadmap';
 import MdRenderer from '../../components/md-renderer';
 import Helmet from '../../components/helmet';
 import { RoadmapPageHeader } from '../../components/roadmap/roadmap-page-header';
 import { InteractiveRoadmapRenderer } from './interactive';
 import { FreeSignUp, SIGNUP_EMAIL_INPUT_NAME, SIGNUP_FORM_ACTION } from '../signup';
 import { BellIcon, EmailIcon } from '@chakra-ui/icons';
+import { RelatedRoadmaps } from '../../components/related-roadmaps';
 
 type RoadmapProps = {
   roadmap: RoadmapType;
@@ -64,11 +71,12 @@ function UpcomingRoadmap(props: RoadmapProps) {
     <Container maxW={'container.md'} position='relative' mx='auto'>
       <Flex flexDir='column' alignItems='center' borderWidth={1} rounded='lg' py={10} boxShadow='inner' px={5}>
         <BellIcon w='90px' h='90px' color='gray.200' mb={5} />
-        <Heading mb={2} fontSize='2xl' >Upcoming Roadmap</Heading>
+        <Heading mb={2} fontSize='2xl'>Upcoming Roadmap</Heading>
         <Text fontSize='sm' mb={4}>Please check back later or subscribe below.</Text>
 
         <form action={SIGNUP_FORM_ACTION} method='post'>
-          <Input type='email' bg={'white'} size='lg' placeholder='Enter your email' mb={2} name={SIGNUP_EMAIL_INPUT_NAME} required />
+          <Input type='email' bg={'white'} size='lg' placeholder='Enter your email' mb={2}
+                 name={SIGNUP_EMAIL_INPUT_NAME} required />
           <Button size='lg' isFullWidth colorScheme='teal' leftIcon={<EmailIcon />} type='submit'>Get Notified</Button>
         </form>
       </Flex>
@@ -76,8 +84,12 @@ function UpcomingRoadmap(props: RoadmapProps) {
   );
 }
 
-export default function Roadmap(props: RoadmapProps) {
-  const { roadmap } = props;
+type RoadmapPageProps = RoadmapProps & {
+  relatedRoadmaps: RoadmapType[]
+};
+
+export default function Roadmap(props: RoadmapPageProps) {
+  const { roadmap, relatedRoadmaps } = props;
 
   return (
     <Box bg='white' minH='100vh'>
@@ -94,7 +106,7 @@ export default function Roadmap(props: RoadmapProps) {
         <TextualRoadmap roadmap={roadmap} />
         <UpcomingRoadmap roadmap={roadmap} />
       </Box>
-
+      <RelatedRoadmaps roadmaps={relatedRoadmaps} />
       <OpensourceBanner />
       <Footer />
     </Box>
@@ -127,10 +139,13 @@ type ContextType = {
 
 export async function getStaticProps(context: ContextType) {
   const roadmapId: string = context?.params?.roadmap;
+  const roadmap: RoadmapType = getRoadmapById(roadmapId)!;
+  const relatedRoadmaps: RoadmapType[] = filterRoadmapsByIds(roadmap?.relatedRoadmaps || []);
 
   return {
     props: {
-      roadmap: getRoadmapById(roadmapId)
+      roadmap,
+      relatedRoadmaps,
     }
   };
 }

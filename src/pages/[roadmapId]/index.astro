@@ -1,11 +1,12 @@
 ---
 import CaptchaScripts from '../../components/Captcha/CaptchaScripts.astro';
-import FAQs from '../../components/FAQs.astro';
+import FAQs from '../../components/FAQs/FAQs.astro';
 import InteractiveRoadmap from '../../components/InteractiveRoadmap/InteractiveRoadmap.astro';
 import MarkdownRoadmap from '../../components/MarkdownRoadmap.astro';
 import RoadmapHeader from '../../components/RoadmapHeader.astro';
 import UpcomingRoadmap from '../../components/UpcomingRoadmap.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { generateArticleSchema, generateFAQSchema } from '../../lib/jsonld-schema';
 import { getRoadmapIds, RoadmapFrontmatter } from '../../lib/roadmap';
 
 export async function getStaticPaths() {
@@ -22,8 +23,28 @@ interface Params extends Record<string, string | undefined> {
 
 const { roadmapId } = Astro.params as Params;
 const roadmapFile = await import(`../../roadmaps/${roadmapId}/${roadmapId}.md`);
-const questions = await import (`../../roadmaps/${roadmapId}/faqs.astro`);
+const { faqs: roadmapFAQs = [] } = await import(`../../roadmaps/${roadmapId}/faqs.astro`);
 const roadmapData = roadmapFile.frontmatter as RoadmapFrontmatter;
+
+let jsonLdSchema = [];
+
+if (roadmapData.schema) {
+  const roadmapSchema = roadmapData.schema;
+  jsonLdSchema.push(
+    generateArticleSchema({
+      url: `https://roadmap.sh/${roadmapId}`,
+      headline: roadmapSchema.headline,
+      description: roadmapSchema.description,
+      datePublished: roadmapSchema.datePublished,
+      dateModified: roadmapSchema.dateModified,
+      imageUrl: roadmapSchema.imageUrl,
+    })
+  );
+}
+
+if (roadmapFAQs.length) {
+  jsonLdSchema.push(generateFAQSchema(roadmapFAQs));
+}
 ---
 
 <BaseLayout
@@ -33,6 +54,7 @@ const roadmapData = roadmapFile.frontmatter as RoadmapFrontmatter;
   keywords={roadmapData.seo.keywords}
   sponsor={roadmapData.sponsor}
   noIndex={roadmapData.isUpcoming}
+  jsonLd={jsonLdSchema}
 >
   <RoadmapHeader
     description={roadmapData.description}
@@ -55,10 +77,7 @@ const roadmapData = roadmapFile.frontmatter as RoadmapFrontmatter;
 
   {
     !roadmapData.isUpcoming && !roadmapData.jsonUrl && (
-      <MarkdownRoadmap
-        roadmapId={roadmapId}
-        description={roadmapData.description}
-      >
+      <MarkdownRoadmap roadmapId={roadmapId} description={roadmapData.description}>
         <roadmapFile.Content />
       </MarkdownRoadmap>
     )
@@ -66,6 +85,7 @@ const roadmapData = roadmapFile.frontmatter as RoadmapFrontmatter;
 
   {roadmapData.isUpcoming && <UpcomingRoadmap />}
 
-  <questions.default />
+  <FAQs faqs={roadmapFAQs} />
+
   <CaptchaScripts slot='after-footer' />
 </BaseLayout>

@@ -11,15 +11,6 @@ hasTopics: true
 dimensions:
   width: 968
   height: 2474.06
-sponsor:
-  url: 'https://www.singlestore.com/resources/ebook-oreilly-chapters-sql-for-data-analysis-2021-11/?utm_source=roadmap&utm_medium=referral&utm_campaign=april2023'
-  title: 'SQL for Data Analysis'
-  imageUrl: 'https://i.imgur.com/WR9fpRj.png'
-  description: 'Learn Advanced Techniques for Transforming Data into Insights using SQL with this free eBook.'
-  event:
-    category: 'SponsorClick'
-    action: 'SingleStore Redirect'
-    label: 'Node.js / SingleStore Link'
 schema:
   headline: 'Node.js Roadmap'
   description: 'Learn Node.js with this interactive step by step guide in 2023. We also have resources and short descriptions attached to the roadmap items so you can get everything you want to learn in one place.'
@@ -79,6 +70,7 @@ seo:
 relatedRoadmaps:
   - 'javascript'
   - 'backend'
+  - 'docker'
   - 'typescript'
   - 'system-design'
   - 'graphql'
@@ -91,4 +83,3 @@ tags:
   - 'main-sitemap'
   - 'skill-roadmap'
 ---
-

@@ -11,15 +11,6 @@ tnsBannerLink: 'https://thenewstack.io?utm_source=roadmap.sh&utm_medium=Referral
 dimensions:
   width: 968
   height: 2840.4
-sponsor:
-  url: 'https://www.honeycomb.io/blog/how-we-define-sre-work-as-team?utm_medium=paid-sponsorship&utm_source=insight-partners&utm_campaign=plg_insightpartners_paidsponsorship'
-  title: 'Day in the Life of an SRE'
-  imageUrl: 'https://i.imgur.com/xANWBZQ.jpg'
-  description: 'Dive into the world of SRE work to better understand an SRE’s role in driving incident response.'
-  event:
-    category: 'SponsorClick'
-    action: 'Honeycomb Redirect'
-    label: 'Backend / Honeycomb Link'
 schema:
   headline: 'Backend Developer Roadmap'
   description: 'Learn how to become a Backend Developer with this interactive step by step guide in 2023. We also have resources and short descriptions attached to the roadmap items so you can get everything you want to learn in one place.'
@@ -55,6 +46,8 @@ seo:
     - 'backend developer quiz'
     - 'backend developer interview questions'
 relatedRoadmaps:
+  - 'docker'
+  - 'full-stack'
   - 'system-design'
   - 'python'
   - 'java'
@@ -71,4 +64,3 @@ tags:
   - 'main-sitemap'
   - 'role-roadmap'
 ---
-

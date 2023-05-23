@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
 import { httpGet, httpPost } from '../../lib/http';
-import Cookies from 'js-cookie';
-import { TOKEN_COOKIE_NAME } from '../../lib/jwt';
 import { pageLoadingMessage } from '../../stores/page';
+import UploadProfilePicture from '../Profile/UploadProfilePicture';
 
 export function UpdateProfileForm() {
   const [name, setName] = useState('');
+  const [avatar, setAvatar] = useState('');
   const [email, setEmail] = useState('');
   const [github, setGithub] = useState('');
   const [twitter, setTwitter] = useState('');
@@ -59,7 +59,7 @@ export function UpdateProfileForm() {
       return;
     }
 
-    const { name, email, links } = response;
+    const { name, email, links, avatar } = response;
 
     setName(name);
     setEmail(email);
@@ -67,23 +67,30 @@ export function UpdateProfileForm() {
     setLinkedin(links?.linkedin || '');
     setTwitter(links?.twitter || '');
     setWebsite(links?.website || '');
+    setAvatar(avatar || '');
 
     setIsLoading(false);
   };
 
   // Make a request to the backend to fill in the form with the current values
   useEffect(() => {
-    pageLoadingMessage.set('Loading profile');
     loadProfile().finally(() => {
       pageLoadingMessage.set('');
     });
   }, []);
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <h2 className="text-3xl font-bold sm:text-4xl">Profile</h2>
       <p className="mt-2">Update your profile details below.</p>
-      <div className="mt-8 space-y-4">
+      <UploadProfilePicture
+        avatarUrl={
+          avatar
+            ? `${import.meta.env.PUBLIC_AVATAR_BASE_URL}/${avatar}`
+            : '/images/default-avatar.png'
+        }
+      />
+      <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
         <div className="flex w-full flex-col">
           <label
             for="name"
@@ -197,7 +204,7 @@ export function UpdateProfileForm() {
         >
           {isLoading ? 'Please wait...' : 'Continue'}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

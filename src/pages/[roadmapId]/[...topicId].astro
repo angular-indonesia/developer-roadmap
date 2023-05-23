@@ -2,7 +2,7 @@
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import RoadmapBanner from '../../components/RoadmapBanner.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getRoadmapTopicFiles, RoadmapTopicFileType } from '../../lib/roadmap-topic';
+import { getRoadmapTopicFiles,RoadmapTopicFileType } from '../../lib/roadmap-topic';
 
 export async function getStaticPaths() {
   const topicPathMapping = await getRoadmapTopicFiles();
@@ -28,7 +28,7 @@ const { file, breadcrumbs, roadmapId, roadmap, heading } = Astro.props as Roadma
 
 <BaseLayout
   title={`${heading} - roadmap.sh`}
-  description={`Free resources to learn ${heading} in ${roadmap.briefTitle}. Everything you need to know about ${heading} and how it realtes to ${roadmap.briefTitle}.`}
+  description={`Free resources to learn ${heading} in ${roadmap.briefTitle}. Everything you need to know about ${heading} and how it relates to ${roadmap.briefTitle}.`}
   noIndex={true}
   permalink={`/${roadmapId}/${topicId}`}
 >

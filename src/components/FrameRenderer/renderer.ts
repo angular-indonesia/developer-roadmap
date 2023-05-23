@@ -1,4 +1,6 @@
 import { wireframeJSONToSVG } from 'roadmap-renderer';
+import { httpPost } from '../../lib/http';
+import { isLoggedIn } from '../../lib/jwt';
 import {
   renderResourceProgress,
   ResourceType,
@@ -104,6 +106,19 @@ export class Renderer {
       });
   }
 
+  trackVisit() {
+    if (!isLoggedIn()) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      httpPost(`${import.meta.env.PUBLIC_API_URL}/v1-visit`, {
+        resourceId: this.resourceId,
+        resourceType: this.resourceType,
+      }).then(() => null);
+    }, 0);
+  }
+
   onDOMLoaded() {
     if (!this.prepareConfig()) {
       return;
@@ -111,6 +126,8 @@ export class Renderer {
 
     const urlParams = new URLSearchParams(window.location.search);
     const roadmapType = urlParams.get('r');
+
+    this.trackVisit();
 
     if (roadmapType) {
       this.switchRoadmap(`/jsons/roadmaps/${roadmapType}.json`);
@@ -159,7 +176,17 @@ export class Renderer {
     e.stopImmediatePropagation();
 
     if (/^ext_link/.test(groupId)) {
-      window.open(`https://${groupId.replace('ext_link:', '')}`);
+      const externalLink = groupId.replace('ext_link:', '');
+
+      if (!externalLink.startsWith('roadmap.sh')) {
+        window.fireEvent({
+          category: 'RoadmapExternalLink',
+          action: `${this.resourceType} / ${this.resourceId}`,
+          label: externalLink,
+        });
+      }
+
+      window.open(`https://${externalLink}`);
       return;
     }
 

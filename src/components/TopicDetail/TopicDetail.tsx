@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import CheckIcon from '../../icons/check.svg';
+import { useMemo, useRef, useState } from 'preact/hooks';
 import CloseIcon from '../../icons/close.svg';
-import ResetIcon from '../../icons/reset.svg';
 import SpinnerIcon from '../../icons/spinner.svg';
 
 import { useKeydown } from '../../hooks/use-keydown';
@@ -14,18 +12,16 @@ import {
   isTopicDone,
   renderTopicProgress,
   ResourceType,
-  toggleMarkTopicDone as toggleMarkTopicDoneApi,
+  updateResourceProgress as updateResourceProgressApi,
 } from '../../lib/resource-progress';
 import { pageLoadingMessage, sponsorHidden } from '../../stores/page';
+import { TopicProgressButton } from './TopicProgressButton';
 
 export function TopicDetail() {
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [topicHtml, setTopicHtml] = useState('');
-
-  const [isDone, setIsDone] = useState<boolean>();
-  const [isUpdatingProgress, setIsUpdatingProgress] = useState(true);
 
   const isGuest = useMemo(() => !isLoggedIn(), []);
   const topicRef = useRef<HTMLDivElement>(null);
@@ -49,37 +45,6 @@ export function TopicDetail() {
     }
   };
 
-  const toggleMarkTopicDone = (isDone: boolean) => {
-    setIsUpdatingProgress(true);
-    toggleMarkTopicDoneApi({ topicId, resourceId, resourceType }, isDone)
-      .then(() => {
-        setIsDone(isDone);
-        setIsActive(false);
-        renderTopicProgress(topicId, isDone);
-      })
-      .catch((err) => {
-        alert(err.message);
-        console.error(err);
-      })
-      .finally(() => {
-        setIsUpdatingProgress(false);
-      });
-  };
-
-  // Load the topic status when the topic detail is active
-  useEffect(() => {
-    if (!topicId || !resourceId || !resourceType) {
-      return;
-    }
-
-    setIsUpdatingProgress(true);
-    isTopicDone({ topicId, resourceId, resourceType })
-      .then((status: boolean) => {
-        setIsUpdatingProgress(false);
-        setIsDone(status);
-      })
-      .catch(console.error);
-  }, [topicId, resourceId, resourceType]);
 
   // Close the topic detail when user clicks outside the topic detail
   useOutsideClick(topicRef, () => {
@@ -103,17 +68,22 @@ export function TopicDetail() {
 
     // Toggle the topic status
     isTopicDone({ topicId, resourceId, resourceType })
-      .then((oldIsDone) => {
-        return toggleMarkTopicDoneApi(
+      .then((oldIsDone) =>
+        updateResourceProgressApi(
           {
             topicId,
             resourceId,
             resourceType,
           },
-          !oldIsDone
+          oldIsDone ? 'pending' : 'done'
+        )
+      )
+      .then(({ done = [] }) => {
+        renderTopicProgress(
+          topicId,
+          done.includes(topicId) ? 'done' : 'pending'
         );
       })
-      .then((newIsDone) => renderTopicProgress(topicId, newIsDone))
       .catch((err) => {
         alert(err.message);
         console.error(err);
@@ -172,6 +142,10 @@ export function TopicDetail() {
     return null;
   }
 
+  const contributionDir =
+    resourceType === 'roadmap' ? 'roadmaps' : 'best-practices';
+  const contributionUrl = `https://github.com/kamranahmedse/developer-roadmap/tree/master/src/data/${contributionDir}/${resourceId}/content`;
+
   return (
     <div>
       <div
@@ -192,50 +166,15 @@ export function TopicDetail() {
           <>
             {/* Actions for the topic */}
             <div className="mb-2">
-              {isGuest && (
-                <button
-                  data-popup="login-popup"
-                  className="inline-flex items-center rounded-md bg-green-600 p-1 px-2 text-sm text-white hover:bg-green-700"
-                  onClick={() => setIsActive(false)}
-                >
-                  <img alt="Check" class='w-3' src={CheckIcon} />
-                  <span className="ml-2">Mark as Done</span>
-                </button>
-              )}
-
-              {!isGuest && (
-                <>
-                  {isUpdatingProgress && (
-                    <button className="inline-flex cursor-default items-center rounded-md border border-gray-300 bg-white p-1 px-2 text-sm text-black">
-                      <img
-                        alt="Check"
-                        class="h-4 w-4 animate-spin"
-                        src={SpinnerIcon}
-                      />
-                      <span className="ml-2">Updating Status..</span>
-                    </button>
-                  )}
-                  {!isUpdatingProgress && !isDone && (
-                    <button
-                      className="inline-flex items-center rounded-md border border-green-600 bg-green-600 p-1 px-2 text-sm text-white hover:bg-green-700"
-                      onClick={() => toggleMarkTopicDone(true)}
-                    >
-                      <img alt="Check" class="w-3" src={CheckIcon} />
-                      <span className="ml-2">Mark as Done</span>
-                    </button>
-                  )}
-
-                  {!isUpdatingProgress && isDone && (
-                    <button
-                      className="inline-flex items-center rounded-md border border-red-600 bg-red-600 p-1 px-2 text-sm text-white hover:bg-red-700"
-                      onClick={() => toggleMarkTopicDone(false)}
-                    >
-                      <img alt="Check" class="h-4" src={ResetIcon} />
-                      <span className="ml-2">Mark as Pending</span>
-                    </button>
-                  )}
-                </>
-              )}
+              <TopicProgressButton
+                topicId={topicId}
+                resourceId={resourceId}
+                resourceType={resourceType}
+                onShowLoginPopup={showLoginPopup}
+                onClose={() => {
+                  setIsActive(false);
+                }}
+              />
 
               <button
                 type="button"
@@ -253,6 +192,21 @@ export function TopicDetail() {
               className="prose prose-quoteless prose-h1:mb-2.5 prose-h1:mt-7 prose-h2:mb-3 prose-h2:mt-0 prose-h3:mb-[5px] prose-h3:mt-[10px] prose-p:mb-2 prose-p:mt-0 prose-blockquote:font-normal prose-blockquote:not-italic prose-blockquote:text-gray-700 prose-li:m-0 prose-li:mb-0.5"
               dangerouslySetInnerHTML={{ __html: topicHtml }}
             ></div>
+
+            <p
+              id="contrib-meta"
+              class="mt-10 border-t pt-3 text-sm leading-relaxed text-gray-400"
+            >
+              Contribute links to learning resources about this topic{' '}
+              <a
+                target="_blank"
+                class="text-blue-700 underline"
+                href={contributionUrl}
+              >
+                on GitHub repository.
+              </a>
+              .
+            </p>
           </>
         )}
       </div>

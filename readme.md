@@ -42,6 +42,7 @@ Here is the list of available roadmaps with more being actively worked upon.
 - [TypeScript Roadmap](https://roadmap.sh/typescript)
 - [C++ Roadmap](https://roadmap.sh/cpp)
 - [React Roadmap](https://roadmap.sh/react)
+- [React Native Roadmap](https://roadmap.sh/react-native)
 - [Vue Roadmap](https://roadmap.sh/vue)
 - [Angular Roadmap](https://roadmap.sh/angular)
 - [Node.js Roadmap](https://roadmap.sh/nodejs)
@@ -53,7 +54,8 @@ Here is the list of available roadmaps with more being actively worked upon.
 - [Java Roadmap](https://roadmap.sh/java)
 - [Spring Boot Roadmap](https://roadmap.sh/spring-boot)
 - [Design System Roadmap](https://roadmap.sh/design-system)
-- [DBA Roadmap](https://roadmap.sh/postgresql-dba)
+- [PostgreSQL Roadmap](https://roadmap.sh/postgresql-dba)
+- [SQL Roadmap](https://roadmap.sh/sql)
 - [Blockchain Roadmap](https://roadmap.sh/blockchain)
 - [ASP.NET Core Roadmap](https://roadmap.sh/aspnet-core)
 - [System Design Roadmap](https://roadmap.sh/system-design)
@@ -91,6 +93,12 @@ Clone the repository, install the dependencies and start the application
 git clone git@github.com:kamranahmedse/developer-roadmap.git
 npm install
 npm run dev
+```
+
+Note: use the `depth` parameter to reduce the clone size and speed up the clone.
+
+```sh
+git clone --depth=1 https://github.com/kamranahmedse/developer-roadmap.git
 ```
 
 ## Contribution

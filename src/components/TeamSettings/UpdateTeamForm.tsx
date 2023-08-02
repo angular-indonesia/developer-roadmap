@@ -141,10 +141,16 @@ export function UpdateTeamForm() {
           />
         </div>
         <div className="mt-4 flex w-full flex-col">
-          <label for="website" className="text-sm leading-none text-slate-500">
+          <label
+            for="website"
+            className={`text-sm leading-none text-slate-500 ${
+              teamType === 'company' ? 'after:content-["*"]' : ''
+            }`}
+          >
             Website
           </label>
           <input
+            required={teamType === 'company'}
             type="text"
             name="website"
             id="website"
@@ -267,7 +273,6 @@ export function UpdateTeamForm() {
           {isDeleting && (
             <DeleteTeamPopup
               onClose={() => {
-                toast.success('Team deleted successfully');
                 setIsDeleting(false);
               }}
             />

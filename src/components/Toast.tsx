@@ -6,11 +6,25 @@ import { ErrorIcon } from './ReactIcons/ErrorIcon';
 import { WarningIcon } from './ReactIcons/WarningIcon';
 import { InfoIcon } from './ReactIcons/InfoIcon';
 import { Spinner } from './ReactIcons/Spinner';
+import { deleteUrlParam, getUrlParams, setUrlParams } from '../lib/browser';
 
 export interface Props {}
 
+const messageCodes: Record<string, string> = {
+  tl: 'Successfully left the team',
+};
+
 export function Toaster(props: Props) {
   const toastMessage = useStore($toastMessage);
+
+  const { c } = getUrlParams();
+  if (c) {
+    deleteUrlParam('c');
+
+    if (messageCodes[c]) {
+      $toastMessage.set({ type: 'success', message: messageCodes[c] });
+    }
+  }
 
   useEffect(() => {
     if (toastMessage === undefined) {
@@ -37,7 +51,7 @@ export function Toaster(props: Props) {
       onClick={() => {
         $toastMessage.set(undefined);
       }}
-      className={`fixed bottom-5 left-1/2 max-w-[300px] animate-fade-slide-up min-w-[300px] sm:min-w-[auto] z-50`}
+      className={`fixed bottom-5 left-1/2 z-50 min-w-[375px] max-w-[375px] animate-fade-slide-up sm:min-w-[auto]`}
     >
       <div
         className={`flex -translate-x-1/2 transform cursor-pointer items-center gap-2 rounded-md border border-gray-200 bg-white py-3 pl-4 pr-5 text-black shadow-md hover:bg-gray-50`}

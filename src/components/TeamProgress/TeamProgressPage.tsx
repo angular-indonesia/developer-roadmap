@@ -7,9 +7,9 @@ import { useToast } from '../../hooks/use-toast';
 import { useStore } from '@nanostores/preact';
 import { $currentTeam } from '../../stores/team';
 import { GroupRoadmapItem } from './GroupRoadmapItem';
-import { setUrlParams } from '../../lib/browser';
-import { getUrlParams } from '../../lib/browser';
-import { $toastMessage } from '../../stores/toast';
+import { getUrlParams, setUrlParams } from '../../lib/browser';
+import { useAuth } from '../../hooks/use-auth';
+import { MemberProgressModal } from './MemberProgressModal';
 
 export type UserProgress = {
   resourceTitle: string;
@@ -55,6 +55,12 @@ export function TeamProgressPage() {
   const [isLoading, setIsLoading] = useState(true);
   const toast = useToast();
   const currentTeam = useStore($currentTeam);
+  const user = useAuth();
+
+  const [showMemberProgress, setShowMemberProgress] = useState<{
+    resourceId: string;
+    member: TeamMember;
+  }>();
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [selectedGrouping, setSelectedGrouping] = useState<
@@ -70,7 +76,17 @@ export function TeamProgressPage() {
       return;
     }
 
-    setTeamMembers(response);
+    setTeamMembers(
+      response.sort((a, b) => {
+        if (a.email === user?.email) {
+          return -1;
+        }
+        if (b.email === user?.email) {
+          return 1;
+        }
+        return 0;
+      })
+    );
   }
 
   useEffect(() => {
@@ -78,7 +94,7 @@ export function TeamProgressPage() {
       return;
     }
 
-    getTeamProgress().finally(() => {
+    getTeamProgress().then(() => {
       pageProgressMessage.set('');
       setIsLoading(false);
     });
@@ -131,6 +147,26 @@ export function TeamProgressPage() {
 
   return (
     <div>
+      {showMemberProgress && (
+        <MemberProgressModal
+          member={showMemberProgress.member}
+          teamId={teamId}
+          resourceId={showMemberProgress.resourceId}
+          resourceType={'roadmap'}
+          onClose={() => {
+            setShowMemberProgress(undefined);
+          }}
+          onShowMyProgress={() => {
+            setShowMemberProgress({
+              resourceId: showMemberProgress.resourceId,
+              member: teamMembers.find(
+                (member) => member.email === user?.email
+              )!,
+            });
+          }}
+        />
+      )}
+
       <div className="flex items-center gap-2">
         {groupingTypes.map((grouping) => (
           <button
@@ -151,7 +187,16 @@ export function TeamProgressPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {groupByRoadmap.map((roadmap) => {
               return (
-                <GroupRoadmapItem key={roadmap.resourceId} roadmap={roadmap} />
+                <GroupRoadmapItem
+                  key={roadmap.resourceId}
+                  roadmap={roadmap}
+                  onShowResourceProgress={(member, resourceId) => {
+                    setShowMemberProgress({
+                      resourceId,
+                      member,
+                    });
+                  }}
+                />
               );
             })}
           </div>
@@ -159,7 +204,16 @@ export function TeamProgressPage() {
         {selectedGrouping === 'member' && (
           <div className="grid gap-4 sm:grid-cols-2">
             {teamMembers.map((member) => (
-              <MemberProgressItem teamId={teamId} member={member} />
+              <MemberProgressItem
+                member={member}
+                isMyProgress={member?.email === user?.email}
+                onShowResourceProgress={(resourceId) => {
+                  setShowMemberProgress({
+                    resourceId,
+                    member,
+                  });
+                }}
+              />
             ))}
           </div>
         )}

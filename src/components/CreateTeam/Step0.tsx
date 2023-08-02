@@ -10,13 +10,13 @@ export const validTeamTypes = [
     value: 'company',
     label: 'Company',
     icon: BuildingIcon,
-    description: 'Use roadmap.sh for your company',
+    description: 'Track the skills and learning progress of the tech team at your company',
   },
   {
     value: 'study_group',
     label: 'Study Group',
     icon: UsersIcon,
-    description: 'Invite your friends and learn together',
+    description: 'Invite your friends or course-mates and track your learning progress together',
   },
 ] as const;
 
@@ -70,7 +70,7 @@ export function Step0(props: Step0Props) {
 
   return (
     <>
-      <div className={'flex flex-row gap-3'}>
+      <div className={'flex flex-col sm:flex-row gap-3'}>
         {validTeamTypes.map((validTeamType) => (
           <button
             className={`flex flex-grow flex-col items-center rounded-lg border px-5 py-12 ${
@@ -87,10 +87,10 @@ export function Step0(props: Step0Props) {
                 validTeamType.value === selectedTeamType ? 'opacity-100' : ''
               }`}
             />
-            <span className="mb-1 block text-2xl font-bold">
+            <span className="mb-2 block text-2xl font-bold">
               {validTeamType.label}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 leading-[21px]">
               {validTeamType.description}
             </span>
           </button>
@@ -100,11 +100,11 @@ export function Step0(props: Step0Props) {
       {/*Error message*/}
       {error && <div className="mt-4 text-sm text-red-500">{error}</div>}
 
-      <div className="mt-4 flex flex-row items-center justify-between gap-2">
+      <div className="mt-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2">
         <a
           href="/account"
           className={
-            'rounded-md border border-red-400 bg-white px-8 py-2 text-red-500'
+            'rounded-md border border-red-400 bg-white px-8 py-2 text-red-500 text-center'
           }
         >
           Cancel

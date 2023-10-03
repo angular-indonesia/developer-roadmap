@@ -11,12 +11,14 @@ import { deleteUrlParam, getUrlParams } from '../../lib/browser';
 import { useAuth } from '../../hooks/use-auth';
 import { Spinner } from '../ReactIcons/Spinner';
 import { ErrorIcon } from '../ReactIcons/ErrorIcon';
+import { renderFlowJSON } from '../../../renderer/renderer';
 
 export type ProgressMapProps = {
   userId?: string;
   resourceId: string;
   resourceType: ResourceType;
   onClose?: () => void;
+  isCustomResource?: boolean;
 };
 
 type UserProgressResponse = {
@@ -38,8 +40,13 @@ export function UserProgressModal(props: ProgressMapProps) {
     resourceType,
     userId: propUserId,
     onClose: onModalClose,
+    isCustomResource,
   } = props;
+
   const { s: userId = propUserId } = getUrlParams();
+  if (!userId) {
+    return null;
+  }
 
   const resourceSvgEl = useRef<HTMLDivElement>(null);
   const popupBodyEl = useRef<HTMLDivElement>(null);
@@ -60,6 +67,12 @@ export function UserProgressModal(props: ProgressMapProps) {
     resourceJsonUrl += `/${resourceId}.json`;
   } else {
     resourceJsonUrl += `/best-practices/${resourceId}.json`;
+  }
+
+  if (isCustomResource) {
+    resourceJsonUrl = `${
+      import.meta.env.PUBLIC_API_URL
+    }/v1-get-roadmap/${resourceId}`;
   }
 
   async function getUserProgress(
@@ -88,6 +101,12 @@ export function UserProgressModal(props: ProgressMapProps) {
       throw error || new Error('Something went wrong. Please try again!');
     }
 
+    if (isCustomResource) {
+      return await renderFlowJSON({
+        nodes: roadmapJson?.nodes || [],
+        edges: roadmapJson?.edges || [],
+      });
+    }
     return await wireframeJSONToSVG(roadmapJson, {
       fontURL: '/fonts/balsamiq.woff2',
     });
@@ -97,7 +116,12 @@ export function UserProgressModal(props: ProgressMapProps) {
     deleteUrlParam('s');
     setError('');
     setShowModal(false);
-    onModalClose?.();
+
+    if (onModalClose) {
+      onModalClose();
+    } else {
+      window.location.reload();
+    }
   }
 
   useKeydown('Escape', () => {
@@ -156,6 +180,14 @@ export function UserProgressModal(props: ProgressMapProps) {
           el.removeAttribute('data-group-id');
         });
 
+        svg.querySelectorAll('[data-node-id]').forEach((el) => {
+          el.removeAttribute('data-node-id');
+        });
+
+        svg.querySelectorAll('[data-type]').forEach((el) => {
+          el.removeAttribute('data-type');
+        });
+
         setResourceSvg(svg);
         setProgressResponse(user);
       })
@@ -177,7 +209,7 @@ export function UserProgressModal(props: ProgressMapProps) {
   const userLearning = progress?.learning?.length || 0;
   const userSkipped = progress?.skipped?.length || 0;
 
-  if (!userId || currentUser?.id === userId) {
+  if (currentUser?.id === userId) {
     deleteUrlParam('s');
     return null;
   }

@@ -8,6 +8,7 @@ import { httpDelete, httpPut } from '../../lib/http';
 import { type TeamResourceConfig } from '../CreateTeam/RoadmapSelector';
 import { useToast } from '../../hooks/use-toast';
 import { RoadmapActionButton } from './RoadmapActionButton';
+import { Lock, Shapes } from 'lucide-react';
 
 type RoadmapHeaderProps = {};
 
@@ -120,6 +121,8 @@ export function RoadmapHeader(props: RoadmapHeaderProps) {
             <div className="flex items-center gap-2">
               {isSharing && $currentRoadmap && (
                 <ShareOptionsModal
+                  isDiscoverable={$currentRoadmap.isDiscoverable}
+                  description={$currentRoadmap?.description}
                   visibility={$currentRoadmap?.visibility}
                   teamId={$currentRoadmap?.teamId}
                   roadmapId={$currentRoadmap?._id!}
@@ -137,6 +140,25 @@ export function RoadmapHeader(props: RoadmapHeaderProps) {
                 />
               )}
 
+              <a
+                href={`${import.meta.env.PUBLIC_EDITOR_APP_URL}/${
+                  $currentRoadmap?._id
+                }`}
+                target="_blank"
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white py-1.5 pl-2 pr-2 text-xs font-medium  text-black hover:border-gray-300 hover:bg-gray-300 sm:px-3 sm:text-sm"
+              >
+                <Shapes className="mr-1.5 h-4 w-4 stroke-[2.5]" />
+                <span className="hidden sm:inline-block">Edit Roadmap</span>
+                <span className="sm:hidden">Edit</span>
+              </a>
+              <button
+                onClick={() => setIsSharing(true)}
+                className="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white py-1.5 pl-2 pr-2 text-xs font-medium  text-black hover:border-gray-300 hover:bg-gray-300 sm:px-3 sm:text-sm"
+              >
+                <Lock className="mr-1.5 h-4 w-4 stroke-[2.5]" />
+                Sharing
+              </button>
+
               <RoadmapActionButton
                 onDelete={() => {
                   const confirmation = window.confirm(
@@ -148,16 +170,6 @@ export function RoadmapHeader(props: RoadmapHeaderProps) {
                   }
 
                   deleteResource().finally(() => null);
-                }}
-                onCustomize={() => {
-                  const editorLink = `${
-                    import.meta.env.PUBLIC_EDITOR_APP_URL
-                  }/${$currentRoadmap?._id}`;
-
-                  window.open(editorLink, '_blank');
-                }}
-                onUpdateSharing={() => {
-                  setIsSharing(true);
                 }}
               />
             </div>

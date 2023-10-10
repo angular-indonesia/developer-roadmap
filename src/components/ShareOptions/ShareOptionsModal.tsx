@@ -1,4 +1,10 @@
-import { type ReactNode, useCallback, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useState,
+  useMemo,
+  useEffect,
+} from 'react';
 import { Globe2, Loader2, Lock } from 'lucide-react';
 import { type ListFriendsResponse, ShareFriendList } from './ShareFriendList';
 import { TransferToTeamList } from './TransferToTeamList';
@@ -7,7 +13,7 @@ import {
   ShareTeamMemberList,
   type TeamMemberList,
 } from './ShareTeamMemberList';
-import { CopyRoadmapLink } from './CopyRoadmapLink';
+import { ShareSuccess } from './ShareSuccess';
 import { useToast } from '../../hooks/use-toast';
 import type { AllowedRoadmapVisibility } from '../CustomRoadmap/CreateRoadmap/CreateRoadmapModal';
 import { httpPatch } from '../../lib/http';
@@ -16,6 +22,7 @@ import { cn } from '../../lib/classname';
 import type { UserTeamItem } from '../TeamDropdown/TeamDropdown';
 
 export type OnShareSettingsUpdate = (options: {
+  isDiscoverable: boolean;
   visibility: AllowedRoadmapVisibility;
   sharedTeamMemberIds: string[];
   sharedFriendIds: string[];
@@ -24,10 +31,12 @@ export type OnShareSettingsUpdate = (options: {
 type ShareOptionsModalProps = {
   onClose: () => void;
   visibility: AllowedRoadmapVisibility;
+  isDiscoverable?: boolean;
   sharedFriendIds?: string[];
   sharedTeamMemberIds?: string[];
   teamId?: string;
   roadmapId?: string;
+  description?: string;
 
   onShareSettingsUpdate: OnShareSettingsUpdate;
 };
@@ -36,11 +45,13 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
   const {
     roadmapId,
     onClose,
+    isDiscoverable: defaultIsDiscoverable = false,
     visibility: defaultVisibility,
     sharedTeamMemberIds: defaultSharedMemberIds = [],
     sharedFriendIds: defaultSharedFriendIds = [],
     teamId,
     onShareSettingsUpdate,
+    description,
   } = props;
 
   const toast = useToast();
@@ -49,9 +60,13 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
   const [isSettingsUpdated, setIsSettingsUpdated] = useState(false);
   const [friends, setFriends] = useState<ListFriendsResponse>([]);
   const [teams, setTeams] = useState<UserTeamItem[]>([]);
-  const [members, setMembers] = useState<TeamMemberList[]>([]);
+
+  // Using global team members loading state to avoid glitchy UI when switching between teams
+  const [isTeamMembersLoading, setIsTeamMembersLoading] = useState(false);
+  const membersCache = useMemo(() => new Map<string, TeamMemberList[]>(), []);
 
   const [visibility, setVisibility] = useState(defaultVisibility);
+  const [isDiscoverable, setIsDiscoverable] = useState(defaultIsDiscoverable);
   const [sharedTeamMemberIds, setSharedTeamMemberIds] = useState<string[]>(
     defaultSharedMemberIds
   );
@@ -104,6 +119,7 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
         visibility,
         sharedFriendIds,
         sharedTeamMemberIds,
+        isDiscoverable,
       }
     );
 
@@ -114,11 +130,16 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
 
     setIsLoading(false);
     setIsSettingsUpdated(true);
-    onShareSettingsUpdate({ sharedFriendIds, visibility, sharedTeamMemberIds });
+    onShareSettingsUpdate({
+      isDiscoverable,
+      sharedFriendIds,
+      visibility,
+      sharedTeamMemberIds,
+    });
   };
 
   const handleTransferToTeam = useCallback(
-    async (teamId: string) => {
+    async (teamId: string, sharedTeamMemberIds: string[]) => {
       if (!roadmapId) {
         return;
       }
@@ -128,6 +149,8 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
         `${import.meta.env.PUBLIC_API_URL}/v1-transfer-roadmap/${roadmapId}`,
         {
           teamId,
+          sharedTeamMemberIds,
+          isDiscoverable,
         }
       );
 
@@ -149,7 +172,12 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
         wrapperClassName="max-w-lg"
         bodyClassName="p-4 flex flex-col"
       >
-        <CopyRoadmapLink roadmapId={roadmapId!} onClose={onClose} />
+        <ShareSuccess
+          visibility={visibility}
+          roadmapId={roadmapId!}
+          description={description}
+          onClose={onClose}
+        />
       </Modal>
     );
   }
@@ -163,7 +191,7 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
         onClose();
       }}
       wrapperClassName="max-w-3xl"
-      bodyClassName="p-4 flex flex-col min-h-[400px]"
+      bodyClassName="p-4 flex flex-col min-h-[440px]"
     >
       <div className="mb-4">
         <h3 className="mb-1 text-xl font-semibold">Update Sharing Settings</h3>
@@ -195,6 +223,8 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
             setSharedFriendIds([]);
             setSharedTeamMemberIds([]);
           }
+
+          setIsDiscoverable(visibility === 'public');
         }}
       />
 
@@ -225,14 +255,6 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
             setSharedFriendIds={setSharedFriendIds}
           />
         )}
-        {canTransferRoadmap && (
-          <TransferToTeamList
-            teams={teams}
-            setTeams={setTeams}
-            selectedTeamId={selectedTeamId}
-            setSelectedTeamId={setSelectedTeamId}
-          />
-        )}
 
         {/* For Team Roadmap */}
         {visibility === 'team' && teamId && (
@@ -240,11 +262,56 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
             teamId={teamId}
             sharedTeamMemberIds={sharedTeamMemberIds}
             setSharedTeamMemberIds={setSharedTeamMemberIds}
-            members={members}
-            setMembers={setMembers}
+            membersCache={membersCache}
+            isTeamMembersLoading={isTeamMembersLoading}
+            setIsTeamMembersLoading={setIsTeamMembersLoading}
           />
         )}
+
+        {canTransferRoadmap && (
+          <>
+            <TransferToTeamList
+              teams={teams}
+              setTeams={setTeams}
+              selectedTeamId={selectedTeamId}
+              setSelectedTeamId={setSelectedTeamId}
+              isTeamMembersLoading={isTeamMembersLoading}
+              setIsTeamMembersLoading={setIsTeamMembersLoading}
+              onTeamChange={() => {
+                setSharedTeamMemberIds([]);
+              }}
+            />
+            {selectedTeamId && (
+              <>
+                <hr className="-mx-4 my-4" />
+                <div className="mb-4">
+                  <ShareTeamMemberList
+                    title="Select who can access this roadmap. You can change this later."
+                    teamId={selectedTeamId!}
+                    sharedTeamMemberIds={sharedTeamMemberIds}
+                    setSharedTeamMemberIds={setSharedTeamMemberIds}
+                    membersCache={membersCache}
+                    isTeamMembersLoading={isTeamMembersLoading}
+                    setIsTeamMembersLoading={setIsTeamMembersLoading}
+                  />
+                </div>
+              </>
+            )}
+          </>
+        )}
       </div>
+
+      {visibility !== 'me' && (
+        <>
+          <hr className="-mx-4 my-4" />
+          <div className="mb-2">
+            <DiscoveryCheckbox
+              isDiscoverable={isDiscoverable}
+              setIsDiscoverable={setIsDiscoverable}
+            />
+          </div>
+        </>
+      )}
 
       <div className="mt-2 flex items-center justify-between gap-1.5">
         <button
@@ -255,21 +322,28 @@ export function ShareOptionsModal(props: ShareOptionsModalProps) {
           Close
         </button>
 
-        {canTransferRoadmap ? (
+        {canTransferRoadmap && (
           <UpdateAction
-            disabled={isUpdateDisabled || isLoading}
+            disabled={
+              isUpdateDisabled || isLoading || sharedTeamMemberIds.length === 0
+            }
             onClick={() => {
-              handleTransferToTeam(selectedTeamId!).then(() => null);
+              handleTransferToTeam(selectedTeamId!, sharedTeamMemberIds).then(
+                () => null
+              );
             }}
           >
             {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             Transfer
           </UpdateAction>
-        ) : (
+        )}
+
+        {!canTransferRoadmap && (
           <UpdateAction
             disabled={isUpdateDisabled || isLoading}
             onClick={() => {
               handleShareChange({
+                isDiscoverable,
                 visibility,
                 sharedTeamMemberIds:
                   visibility === 'team' ? sharedTeamMemberIds : [],
@@ -307,5 +381,27 @@ function UpdateAction(props: {
     >
       {children}
     </button>
+  );
+}
+
+type DiscoveryCheckboxProps = {
+  isDiscoverable: boolean;
+  setIsDiscoverable: (isDiscoverable: boolean) => void;
+};
+
+function DiscoveryCheckbox(props: DiscoveryCheckboxProps) {
+  const { isDiscoverable, setIsDiscoverable } = props;
+
+  return (
+    <label className="group flex items-center gap-1.5">
+      <input
+        type="checkbox"
+        checked={isDiscoverable}
+        onChange={(e) => setIsDiscoverable(e.target.checked)}
+      />
+      <span className="text-sm text-gray-500 group-hover:text-gray-700">
+        Include on discovery page (when launched)
+      </span>
+    </label>
   );
 }

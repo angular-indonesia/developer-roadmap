@@ -15,7 +15,6 @@ import {
 } from '../../lib/resource-progress';
 import { pageProgressMessage, sponsorHidden } from '../../stores/page';
 import { TopicProgressButton } from './TopicProgressButton';
-import { ContributionForm } from './ContributionForm';
 import { showLoginPopup } from '../../lib/popup';
 import { useToast } from '../../hooks/use-toast';
 import type {
@@ -27,6 +26,7 @@ import { cn } from '../../lib/classname';
 import { Ban, FileText, X } from 'lucide-react';
 import { getUrlParams } from '../../lib/browser';
 import { Spinner } from '../ReactIcons/Spinner';
+import { GitHubIcon } from '../ReactIcons/GitHubIcon.tsx';
 
 type TopicDetailProps = {
   canSubmitContribution: boolean;
@@ -44,7 +44,8 @@ const linkTypes: Record<AllowedLinkTypes, string> = {
 export function TopicDetail(props: TopicDetailProps) {
   const { canSubmitContribution } = props;
 
-  const [contributionAlertMessage, setContributionAlertMessage] = useState('');
+  const [hasEnoughLinks, setHasEnoughLinks] = useState(false);
+  const [contributionUrl, setContributionUrl] = useState('');
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isContributing, setIsContributing] = useState(false);
@@ -66,12 +67,10 @@ export function TopicDetail(props: TopicDetailProps) {
   // Close the topic detail when user clicks outside the topic detail
   useOutsideClick(topicRef, () => {
     setIsActive(false);
-    setIsContributing(false);
   });
 
   useKeydown('Escape', () => {
     setIsActive(false);
-    setIsContributing(false);
   });
 
   // Toggle topic is available even if the component UI is not active
@@ -120,7 +119,6 @@ export function TopicDetail(props: TopicDetailProps) {
     setIsActive(true);
     sponsorHidden.set(true);
 
-    setContributionAlertMessage('');
     setTopicId(topicId);
     setResourceType(resourceType);
     setResourceId(resourceId);
@@ -159,6 +157,18 @@ export function TopicDetail(props: TopicDetailProps) {
         let topicHtml = '';
         if (!isCustomResource) {
           topicHtml = response as string;
+          const topicDom = new DOMParser().parseFromString(
+            topicHtml,
+            'text/html',
+          );
+
+          const links = topicDom.querySelectorAll('a');
+          const contributionUrl =
+            topicDom.querySelector('[data-github-url]')?.dataset?.githubUrl ||
+            '';
+
+          setContributionUrl(contributionUrl);
+          setHasEnoughLinks(links.length >= 3);
         } else {
           setLinks((response as RoadmapContentDocument)?.links || []);
           setTopicTitle((response as RoadmapContentDocument)?.title || '');
@@ -204,21 +214,6 @@ export function TopicDetail(props: TopicDetailProps) {
           </div>
         )}
 
-        {!isLoading && isContributing && (
-          <ContributionForm
-            resourceType={resourceType}
-            resourceId={resourceId}
-            topicId={topicId}
-            onClose={(message?: string) => {
-              if (message) {
-                setContributionAlertMessage(message);
-              }
-
-              setIsContributing(false);
-            }}
-          />
-        )}
-
         {!isContributing && !isLoading && !error && (
           <>
             {/* Actions for the topic */}
@@ -229,7 +224,6 @@ export function TopicDetail(props: TopicDetailProps) {
                 resourceType={resourceType}
                 onClose={() => {
                   setIsActive(false);
-                  setIsContributing(false);
                 }}
               />
 
@@ -239,7 +233,6 @@ export function TopicDetail(props: TopicDetailProps) {
                 className="absolute right-2.5 top-2.5 inline-flex items-center rounded-lg bg-transparent p-1.5 text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900"
                 onClick={() => {
                   setIsActive(false);
-                  setIsContributing(false);
                 }}
               >
                 <X className="h-5 w-5" />
@@ -292,29 +285,21 @@ export function TopicDetail(props: TopicDetailProps) {
             )}
 
             {/* Contribution */}
-            {canSubmitContribution && (
+            {canSubmitContribution && !hasEnoughLinks && contributionUrl && (
               <div className="mt-8 flex-1 border-t">
                 <p className="mb-2 mt-2 text-sm leading-relaxed text-gray-400">
-                  Help others learn by submitting links to learn more about this
-                  topic{' '}
+                  Help us improve this introduction and submit a link to a good
+                  article, podcast, video, or any other resource that helped you
+                  understand this topic better.
                 </p>
-                <button
-                  onClick={() => {
-                    if (isGuest) {
-                      setIsActive(false);
-                      showLoginPopup();
-                      return;
-                    }
-
-                    setIsContributing(true);
-                  }}
-                  disabled={!!contributionAlertMessage}
-                  className="block w-full rounded-md bg-gray-800 p-2 text-sm text-white transition-colors hover:bg-black hover:text-white disabled:bg-green-200 disabled:text-black"
+                <a
+                  href={contributionUrl}
+                  target={'_blank'}
+                  className="flex w-full items-center justify-center rounded-md bg-gray-800 p-2 text-sm text-white transition-colors hover:bg-black hover:text-white disabled:bg-green-200 disabled:text-black"
                 >
-                  {contributionAlertMessage
-                    ? contributionAlertMessage
-                    : 'Submit a Link'}
-                </button>
+                  <GitHubIcon className="mr-2 inline-block h-4 w-4 text-white" />
+                  Edit this Content
+                </a>
               </div>
             )}
           </>

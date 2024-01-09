@@ -37,7 +37,7 @@
 - [The Web Performance impact of jQuery](https://twitter.com/TheRealNooshu/status/1509487050122276864)
 - [Have Single-Page Apps Ruined the Web? | Transitional Apps](https://www.youtube.com/watch?v=860d8usGC0o)
 - [Improve how you architect webapps](https://www.patterns.dev/)
-- [Nuxt SSR Optimizing Tips](https://vueschool.io/articles/vuejs-tutorials/nuxt-ssr-optimizing-tips/, Filip Rakowski
+- [Nuxt SSR Optimizing Tips](https://vueschool.io/articles/vuejs-tutorials/nuxt-ssr-optimizing-tips/), Filip Rakowski
 - [GPU accelerated JavaScript](https://gpu.rocks/#/)
 - [Introducing Partytown 🎉: Run Third-Party Scripts From a Web Worker](https://dev.to/adamdbradley/introducing-partytown-run-third-party-scripts-from-a-web-worker-2cnp)
 - [Astro: Astro is a fresh but familiar approach to building websites. Astro combines decades of proven performance best practices with the DX improvements of the component-oriented era. Use your favorite JavaScript framework and automatically ship the bare-minimum amount of JavaScript—by default.](https://docs.astro.build/getting-started/)
@@ -71,7 +71,7 @@
 - [Idle Until Urgent](https://philipwalton.com/articles/idle-until-urgent/)
 - [Browser painting and considerations for web performance](https://css-tricks.com/browser-painting-and-considerations-for-web-performance/)
 - [The Cost Of JavaScript In 2018](https://medium.com/@addyosmani/the-cost-of-javascript-in-2018-7d8950fbb5d4) ([Video](https://www.youtube.com/watch?v=i5R7giitymk))
-- [Examining Web Worker Performance](https://www.loxodrome.io/post/web-worker-performance/)
+- [Examining Web Worker Performance](https://www.jameslmilner.com/posts/web-worker-performance)
 - [Front-End Performance Checklist](https://github.com/thedaviddias/Front-End-Performance-Checklist)
 - [jankfree](http://jankfree.org/)
 - [What forces layout/reflow?](https://gist.github.com/paulirish/5d52fb081b3570c81e3a)

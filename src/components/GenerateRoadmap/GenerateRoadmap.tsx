@@ -16,6 +16,7 @@ import {
   getOpenAIKey,
   isLoggedIn,
   removeAuthToken,
+  setAIReferralCode,
   visitAIRoadmap,
 } from '../../lib/jwt';
 import { RoadmapSearch } from './RoadmapSearch.tsx';
@@ -38,6 +39,8 @@ import { OpenAISettings } from './OpenAISettings.tsx';
 import { IS_KEY_ONLY_ROADMAP_GENERATION } from '../../lib/ai.ts';
 import { AITermSuggestionInput } from './AITermSuggestionInput.tsx';
 import { useParams } from '../../hooks/use-params.ts';
+import { IncreaseRoadmapLimit } from './IncreaseRoadmapLimit.tsx';
+import { AuthenticationForm } from '../AuthenticationFlow/AuthenticationForm.tsx';
 
 export type GetAIRoadmapLimitResponse = {
   used: number;
@@ -87,7 +90,10 @@ type GetAIRoadmapResponse = {
 export function GenerateRoadmap() {
   const roadmapContainerRef = useRef<HTMLDivElement>(null);
 
-  const { id: roadmapId } = getUrlParams() as { id: string };
+  const { id: roadmapId, rc: referralCode } = getUrlParams() as {
+    id: string;
+    rc?: string;
+  };
   const toast = useToast();
 
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
@@ -107,7 +113,7 @@ export function GenerateRoadmap() {
   const [roadmapTopicLimitUsed, setRoadmapTopicLimitUsed] = useState(0);
   const [isConfiguring, setIsConfiguring] = useState(false);
 
-  const openAPIKey = getOpenAIKey();
+  const [openAPIKey, setOpenAPIKey] = useState<string | undefined>(getOpenAIKey());
   const isKeyOnly = IS_KEY_ONLY_ROADMAP_GENERATION;
   const isAuthenticatedUser = isLoggedIn();
 
@@ -362,6 +368,17 @@ export function GenerateRoadmap() {
   }, []);
 
   useEffect(() => {
+    if (!referralCode || isLoggedIn()) {
+      deleteUrlParam('rc');
+      return;
+    }
+
+    setAIReferralCode(referralCode);
+    deleteUrlParam('rc');
+    showLoginPopup();
+  }, []);
+
+  useEffect(() => {
     if (!roadmapId || roadmapId === currentRoadmap?.id) {
       return;
     }
@@ -392,13 +409,13 @@ export function GenerateRoadmap() {
 
   const pageUrl = `https://roadmap.sh/ai?id=${roadmapId}`;
   const canGenerateMore = roadmapLimitUsed < roadmapLimit;
-  const isLoggedInUser = isLoggedIn();
 
   return (
     <>
       {isConfiguring && (
-        <OpenAISettings
+        <IncreaseRoadmapLimit
           onClose={() => {
+            setOpenAPIKey(getOpenAIKey());
             setIsConfiguring(false);
             loadAIRoadmapLimit().finally(() => null);
           }}
@@ -487,10 +504,8 @@ export function GenerateRoadmap() {
                       onClick={() => setIsConfiguring(true)}
                       className="rounded-xl border border-current px-2 py-0.5 text-left text-sm text-blue-500 transition-colors hover:bg-blue-400 hover:text-white"
                     >
-                      By-pass all limits by{' '}
-                      <span className="font-semibold">
-                        adding your own OpenAI API key
-                      </span>
+                      Need to generate more?{' '}
+                      <span className="font-semibold">Click here.</span>
                     </button>
                   )}
 
@@ -642,11 +657,48 @@ export function GenerateRoadmap() {
           )}
         </div>
         <div
-          ref={roadmapContainerRef}
-          id="roadmap-container"
-          onClick={handleNodeClick}
-          className="relative px-4 py-5 [&>svg]:mx-auto [&>svg]:max-w-[1300px]"
-        />
+          className={cn({
+            'relative mb-20 max-h-[800px] min-h-[800px] sm:max-h-[1000px] md:min-h-[1000px]  lg:max-h-[1200px] lg:min-h-[1200px] overflow-hidden':
+              !isAuthenticatedUser,
+          })}
+        >
+          <div
+            ref={roadmapContainerRef}
+            id="roadmap-container"
+            onClick={handleNodeClick}
+            className="relative px-4 py-5 [&>svg]:mx-auto [&>svg]:max-w-[1300px]"
+          />
+          {!isAuthenticatedUser && (
+            <div className="absolute bottom-0 left-0 right-0">
+              <div className="h-80 w-full bg-gradient-to-t from-gray-100 to-transparent" />
+              <div className="bg-gray-100">
+                <div className="mx-auto px-5 max-w-[600px] flex-col items-center justify-center bg-gray-100 pt-px">
+                  <div className="mt-8 text-center">
+                    <h2 className="mb-0.5 sm:mb-3 text-xl sm:text-2xl font-medium">
+                      Sign up to View the full roadmap
+                    </h2>
+                    <p className="mb-6 text-sm sm:text-base text-gray-600 text-balance">
+                      You must be logged in to view the complete roadmap
+                    </p>
+                  </div>
+                  <div className="mx-auto max-w-[350px]">
+                    <AuthenticationForm type="signup" />
+
+                    <div className="mt-6 text-center text-sm text-slate-600">
+                      Already have an account?{' '}
+                      <a
+                        href="/login"
+                        className="font-medium text-blue-700 hover:text-blue-600"
+                      >
+                        Login
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </section>
     </>
   );

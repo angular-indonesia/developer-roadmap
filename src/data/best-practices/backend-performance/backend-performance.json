@@ -575,7 +575,7 @@
           "x": "801",
           "y": "2305",
           "properties": {
-            "controlName": "ext_link:roadmap.sh/backend"
+            "controlName": "ext_link:roadmap.sh/system-design"
           },
           "children": {
             "controls": {
@@ -622,7 +622,7 @@
           "x": "593",
           "y": "2305",
           "properties": {
-            "controlName": "ext_link:roadmap.sh/frontend"
+            "controlName": "ext_link:roadmap.sh/backend"
           },
           "children": {
             "controls": {
